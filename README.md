@@ -1,4 +1,7 @@
-# show_heart_rate.py is calc heart rate function.
+### nRF51822 Programe Tools.py 2018/5/9
+- nRF51822 的 PC 端烧录工具。
+
+### show_heart_rate.py is calc heart rate function.
 - examp
 
 年龄:20 最大心率:200次/分钟
