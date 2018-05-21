@@ -1,3 +1,6 @@
+### nRF5x Programe Tools.py	2018/5/21
+- nRF5x Programe Tools, write SoftDevice and App and Bootloader file, restart, protection, get MAC address.
+
 ### 1024_crawler.py 2018/5/18
 - 草榴爬虫
 
