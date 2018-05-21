@@ -22,7 +22,7 @@ nRF5x Programe Tools，Use Nordic nRF5x-Pynrfjprog。
 #-------------------------------------------------------------------------
 
 softdevice_file_dir = os.getcwd()
-bootload_file_dir = os.getcwd()
+bootloader_file_dir = os.getcwd()
 app_file_dir = os.getcwd()
 
 def about():
@@ -33,7 +33,7 @@ def get_softdevice_file():
 
     filename = filedialog.askopenfilename(initialdir=softdevice_file_dir, \
         title='Choice SoftDevice File', \
-        defaultextension='.config', \
+        defaultextension='.hex', \
         filetypes = [('Hex File', '.hex')])
     if filename:
         softdevice_file_dir = os.path.dirname(filename)
@@ -44,21 +44,21 @@ def get_app_file():
 
     filename = filedialog.askopenfilename(initialdir=app_file_dir, \
         title='Choice App Firmware File', \
-        defaultextension='.config', \
+        defaultextension='.hex', \
         filetypes = [('Hex File', '.hex')])
     if filename:
         app_file_dir = os.path.dirname(filename)
         AppPath.set(filename)
 
-def get_bootload_file():
-    global bootload_file, bootload_file_dir
+def get_bootloader_file():
+    global bootloader_file, bootloader_file_dir
 
-    filename = filedialog.askopenfilename(initialdir=bootload_file_dir, \
-        title='Choice Bootload File', \
-        defaultextension='.config', \
+    filename = filedialog.askopenfilename(initialdir=bootloader_file_dir, \
+        title='Choice Bootloader File', \
+        defaultextension='.hex', \
         filetypes = [('Hex File', '.hex')])
     if filename:
-        bootload_file_dir = os.path.dirname(filename)
+        bootloader_file_dir = os.path.dirname(filename)
         BootloadPath.set(filename)
 
 def get_jlink_list():
@@ -112,14 +112,10 @@ def programe_file_thread(jlink_obj, progress_obj, file_1, file_2, file_3):
         State.set("State: config protection...")
         if 1 == device_family.get():
             if 1 == read_back_protection.get():
-                jlink_obj.write_u32(0x10001004, 0xFFFF0000, True)
-            else:
-                jlink_obj.write_u32(0x10001004, 0xFFFFFFFF, True)
+                jlink_obj.readback_protect('ALL')
         else:
             if 1 == read_back_protection.get():
                 jlink_obj.write_u32(0x10001208, 0xFFFFFF00, True)
-            else:
-                jlink_obj.write_u32(0x10001208, 0xFFFFFFFF, True)
         
         # Reset device, run
         jlink_obj.sys_reset()
@@ -132,7 +128,6 @@ def programe_file_thread(jlink_obj, progress_obj, file_1, file_2, file_3):
     except API.APIError as exc:
         jlink_obj.close()
         progress_obj["value"] = 0
-        State.set("State: Error.")
         messagebox.showerror('Programe Status', str(exc))
     else:
         messagebox.showinfo('Programe Status', 'Programe Successed.')
@@ -155,13 +150,13 @@ def programe_file():
         else:
             app_file = None
         if Check_3.get():
-            bootload_file = BootloadPath.get()
+            bootloader_file = BootloadPath.get()
         else:
-            bootload_file = None
+            bootloader_file = None
 
         if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
             download_progress["value"] = 0
-            threading.Thread(target = programe_file_thread, args = [jlink_obj, download_progress, sd_file, app_file, bootload_file]).start()
+            threading.Thread(target = programe_file_thread, args = [jlink_obj, download_progress, sd_file, app_file, bootloader_file]).start()
         else:
             messagebox.showerror('Programe Status', 'Must choice one J-Link')
     else:
@@ -250,7 +245,7 @@ if platform.release() == 'XP':
     w = 860 # width for the Tk root
     h = 595 # height for the Tk root
 else:
-    w = 545 # width for the Tk root
+    w = 550 # width for the Tk root
     h = 310 # height for the Tk root
 
 # get screen width and height
@@ -303,10 +298,10 @@ SoftDevicePathEnter = Entry(choice_files_frame, width=51, textvariable=AppPath)
 SoftDevicePathEnter.grid(row=1, column=1, padx=5, pady=5, stick=E)
 Button(choice_files_frame, text='...', command=get_app_file, width=3).grid(row=1, column=2, padx=5, pady=5, stick=E)
 
-Checkbutton(choice_files_frame, text="Bootload File", variable=Check_3).grid(row=2, column=0, padx=5, pady=5, stick=W)
+Checkbutton(choice_files_frame, text="Bootloader File", variable=Check_3).grid(row=2, column=0, padx=5, pady=5, stick=W)
 SoftDevicePathEnter = Entry(choice_files_frame, width=51, textvariable=BootloadPath)
 SoftDevicePathEnter.grid(row=2, column=1, padx=5, pady=5, stick=E)
-Button(choice_files_frame, text='...', command=get_bootload_file, width=3).grid(row=2, column=2, padx=5, pady=5, stick=E)
+Button(choice_files_frame, text='...', command=get_bootloader_file, width=3).grid(row=2, column=2, padx=5, pady=5, stick=E)
 
 choice_files_frame.grid(row=0, padx=5, pady=5, stick=W)
 
