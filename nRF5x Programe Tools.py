@@ -8,8 +8,6 @@ from tkinter import ttk
 
 from pynrfjprog import API, Hex
 import pynrfjprog
-import serial
-import serial.tools.list_ports
 
 import threading
 import platform
@@ -71,9 +69,11 @@ def get_jlink_list():
     if not jlink_obj.is_open():
         jlink_obj.open()
     jlink_list = ['Choice ID']
-    for device in jlink_obj.enum_emu_snr():
-        jlink_list.append(device)
-    jlink_obj.close()
+    if jlink_obj.enum_emu_snr():
+        for device in jlink_obj.enum_emu_snr():
+            jlink_list.append(device)
+    else:
+        jlink_obj.close()
     if len(jlink_list) != 1:
         return jlink_list
     else:
@@ -93,8 +93,6 @@ def programe_file_thread(jlink_obj, progress_obj, file_1, file_2, file_3):
 
         progress_obj["maximum"] = 3
         if file_1:
-            State.set("State: erase...")
-            jlink_obj.erase_all()
             State.set("State: write SoftDevice...")
             for segment in Hex.Hex(file_1):
                 jlink_obj.write(segment.address, segment.data, True)
@@ -229,6 +227,27 @@ def device_recover():
     else:
         messagebox.showerror('Device Recover', 'Must choice one J-Link.')
 
+def device_erase_all():
+    if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
+        try:
+            if 1 == device_family.get():
+                jlink_obj = API.API(API.DeviceFamily.NRF51)
+            else:
+                jlink_obj = API.API(API.DeviceFamily.NRF52)
+            if not jlink_obj.is_open():
+                jlink_obj.open()
+            jlink_obj.connect_to_emu_with_snr(int(JLinkDevice.get()))
+            jlink_obj.erase_all()
+            jlink_obj.close()
+        except (API.APIError, pynrfjprog.API.APIError) as exc:
+            jlink_obj.close()
+            State.set("State: Device Erase All Failed.")
+            messagebox.showerror('Device Erase All', str(exc))
+        else:
+            State.set("State: Device Erase All Successed.")
+    else:
+        messagebox.showerror('Device Erase All', 'Must choice one J-Link.')
+
 #------------------------------------------------------------------------- 
 root = Tk() # create a top-level window
 
@@ -242,8 +261,8 @@ Check_2 = IntVar()
 Check_3 = IntVar()
 
 if platform.release() == 'XP':
-    w = 860 # width for the Tk root
-    h = 595 # height for the Tk root
+    w = 500 # width for the Tk root
+    h = 270 # height for the Tk root
 else:
     w = 550 # width for the Tk root
     h = 310 # height for the Tk root
@@ -271,7 +290,7 @@ device_family = IntVar()
 device_family.set(1)
 
 read_back_protection = IntVar()
-read_back_protection.set(1)
+read_back_protection.set(2)
 
 menubar = Menu(root)
 setting_menu = Menu(menubar, tearoff=False)
@@ -307,7 +326,7 @@ choice_files_frame.grid(row=0, padx=5, pady=5, stick=W)
 
 multi_download_frame = LabelFrame(frame, text="Programe")
 if platform.release() == 'XP':
-    w = 52
+    w = 37
 else:
     w = 37
 
@@ -327,8 +346,13 @@ Button(multi_download_frame, text='Recover', command=device_recover).grid(row=0,
 Label(multi_download_frame, text='Programe choice file:').grid(row=1, column=0, padx=5, columnspan=2, pady=5, stick=W)
 Button(multi_download_frame, text='Programe', command=programe_file).grid(row=1, column=2, padx=5, pady=5)
 Button(multi_download_frame, text='Get MAC', command=get_device_mac).grid(row=1, column=3, padx=5, pady=5, stick=E+W+N+S)
+Button(multi_download_frame, text='Erase All', command=device_erase_all).grid(row=1, column=4, padx=5, pady=5, stick=E+W+N+S)
 
-download_progress = Progressbar(multi_download_frame, orient="horizontal", length=520, mode="determinate")
+if platform.release() == 'XP':
+    download_progress = Progressbar(multi_download_frame, orient="horizontal", length=460, mode="determinate")
+else:
+    download_progress = Progressbar(multi_download_frame, orient="horizontal", length=520, mode="determinate")
+
 download_progress.grid(row=2, column=0, columnspan=5, padx=5, pady=5)
 
 Label(multi_download_frame, textvariable=State).grid(row=3, column=0, columnspan=5, padx=5, pady=5, stick=W)
@@ -343,3 +367,4 @@ frame.pack()
 # start the app
 if __name__ == "__main__":
 	root.mainloop() # call master's Frame.mainloop() method.
+	root.destroy() # if mainloop quits, destroy window
