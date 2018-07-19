@@ -14,7 +14,8 @@ import platform
 import os
 
 """
-nRF5x Programe Tools，Use Nordic nRF5x-Pynrfjprog。
+nRF5x Programe Tools, Use Nordic nRF5x-Pynrfjprog.
+pyinstaller.py nrf5x_jtag_tool.py -F -w create exe file. -w is no console.
 """
 
 #-------------------------------------------------------------------------
