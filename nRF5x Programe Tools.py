@@ -7,14 +7,13 @@ from tkinter.ttk import *
 from tkinter import ttk
 
 from pynrfjprog import API, Hex
-import pynrfjprog
 
 import threading
 import platform
 import os
 
 """
-nRF5x Programe Tools, Use Nordic nRF5x-Pynrfjprog.
+nRF5x Programe Tools，Use Nordic nRF5x-Pynrfjprog。
 pyinstaller.py nrf5x_jtag_tool.py -F -w create exe file. -w is no console.
 """
 
@@ -25,7 +24,7 @@ bootloader_file_dir = os.getcwd()
 app_file_dir = os.getcwd()
 
 def about():
-    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.0\nAuthor：Hellogz 2018/5/21')
+    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.1\nAuthor：Hellogz 2018/9/14')
 
 def get_softdevice_file():
     global softdevice_file, softdevice_file_dir
@@ -73,8 +72,8 @@ def get_jlink_list():
     if jlink_obj.enum_emu_snr():
         for device in jlink_obj.enum_emu_snr():
             jlink_list.append(device)
-    else:
-        jlink_obj.close()
+
+    jlink_obj.close()
     if len(jlink_list) != 1:
         return jlink_list
     else:
@@ -231,6 +230,7 @@ def device_recover():
 def device_erase_all():
     if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
         try:
+            jlink_obj = None
             if 1 == device_family.get():
                 jlink_obj = API.API(API.DeviceFamily.NRF51)
             else:
