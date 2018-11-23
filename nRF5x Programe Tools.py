@@ -25,7 +25,7 @@ bootloader_file_dir = os.getcwd()
 app_file_dir = os.getcwd()
 
 def about():
-    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.1\nAuthor：Hellogz 2018/9/14')
+    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.2\nAuthor：Hellogz 2018/11/23')
 
 def get_softdevice_file():
     global softdevice_file, softdevice_file_dir
