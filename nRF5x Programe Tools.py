@@ -6,6 +6,7 @@ from tkinter import Menu
 from tkinter.ttk import *
 from tkinter import ttk
 
+import pynrfjprog
 from pynrfjprog import API, Hex
 
 import threading
