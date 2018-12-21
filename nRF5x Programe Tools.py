@@ -25,7 +25,7 @@ bootloader_file_dir = os.getcwd()
 app_file_dir = os.getcwd()
 
 def about():
-    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.2\nAuthor：Hellogz 2018/11/23')
+    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.3\nAuthor：Hellogz 2018/12/19')
 
 def get_softdevice_file():
     global softdevice_file, softdevice_file_dir
@@ -129,7 +129,7 @@ def programe_file_thread(jlink_obj, progress_obj, file_1, file_2, file_3):
         progress_obj["value"] = 0
         messagebox.showerror('Programe Status', str(exc))
     else:
-        messagebox.showinfo('Programe Status', 'Programe Successed.')
+        State.set('State: Programe Successed.')
 
 
 def programe_file():
@@ -202,8 +202,7 @@ def get_device_mac():
             State.set("State: Read Device MAC Address Failed.")
             messagebox.showerror('Read Device MAC Address', str(exc))
         else:
-            State.set("State: Read Device MAC Address Successed.")
-            messagebox.showinfo('Read Device MAC Address', addr_string)
+            State.set("State: Read Device MAC Address Successed is %s." %(addr_string))
     else:
         messagebox.showerror('Read Device MAC Address', 'Must choice one J-Link.')
 
