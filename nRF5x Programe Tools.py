@@ -25,7 +25,7 @@ bootloader_file_dir = os.getcwd()
 app_file_dir = os.getcwd()
 
 def about():
-    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.3\nAuthor：Hellogz 2018/12/19')
+    messagebox.showinfo('About', 'nRF5x Programe Tools V1.1.4\nAuthor：Hellogz 2019/07/03')
 
 def get_softdevice_file():
     global softdevice_file, softdevice_file_dir
@@ -80,33 +80,67 @@ def get_jlink_list():
     else:
         return ["No J-Link Device"]
 
-def refresh_jlink_list():
+def button_disable():
+    refresh_jlink_list_cmd_button['state'] = DISABLED
+    restart_device_cmd_button['state'] = DISABLED
+    device_recover_cmd_button['state'] = DISABLED
+    programe_file_cmd_button['state'] = DISABLED
+    get_device_mac_cmd_button['state'] = DISABLED
+    device_erase_all_cmd_button['state'] = DISABLED
+
+def button_enable():
+    refresh_jlink_list_cmd_button['state'] = NORMAL
+    restart_device_cmd_button['state'] = NORMAL
+    device_recover_cmd_button['state'] = NORMAL
+    programe_file_cmd_button['state'] = NORMAL
+    get_device_mac_cmd_button['state'] = NORMAL
+    device_erase_all_cmd_button['state'] = NORMAL
+
+def refresh_jlink_list_cmd():
     global JLinkDeviceList
 
+    button_disable()
     JLinkDeviceList = get_jlink_list()
     JLinkDevice_OP.set_menu(*JLinkDeviceList)
+    button_enable()
 
 def programe_file_thread(jlink_obj, progress_obj, file_1, file_2, file_3):
+    button_disable()
     try:
+        State.set("State: Busy")
         if not jlink_obj.is_open():
             jlink_obj.open()
         jlink_obj.connect_to_emu_with_snr(int(JLinkDevice.get()))
 
-        progress_obj["maximum"] = 3
+        progress_obj["maximum"] = 2
+        step = 0
+        if file_1:
+            progress_obj["maximum"] += len([segment for segment in Hex.Hex(file_1)])
+        if file_2:
+            progress_obj["maximum"] += len([segment for segment in Hex.Hex(file_2)])
+        if file_3:
+            progress_obj["maximum"] += len([segment for segment in Hex.Hex(file_3)])
+
         if file_1:
             State.set("State: write SoftDevice...")
             for segment in Hex.Hex(file_1):
                 jlink_obj.write(segment.address, segment.data, True)
-        progress_obj["value"] = 1
+                step += 1
+                progress_obj["value"] = step
+
         if file_2:
             State.set("State: write App...")
             for segment in Hex.Hex(file_2):
                 jlink_obj.write(segment.address, segment.data, True)
-        progress_obj["value"] = 2
+                step += 1
+                progress_obj["value"] = step
+
         if file_3:
             State.set("State: write Bootload...")
             for segment in Hex.Hex(file_3):
                 jlink_obj.write(segment.address, segment.data, True)
+                step += 1
+                progress_obj["value"] = step
 
         State.set("State: config protection...")
         if 1 == device_family.get():
@@ -123,16 +157,18 @@ def programe_file_thread(jlink_obj, progress_obj, file_1, file_2, file_3):
         jlink_obj.close()
 
         State.set("State: Done.")
-        progress_obj["value"] = 3
+        progress_obj["value"] = progress_obj["maximum"]
     except API.APIError as exc:
         jlink_obj.close()
         progress_obj["value"] = 0
+        State.set("State: Programe Failed.")
         messagebox.showerror('Programe Status', str(exc))
     else:
         State.set('State: Programe Successed.')
+    button_enable()
 
 
-def programe_file():
+def programe_file_cmd():
     global JLinkDevice
 
     if Check_1.get() or Check_2.get() or Check_3.get():
@@ -162,7 +198,9 @@ def programe_file():
         messagebox.showerror('Programe Status', 'Must choice one file.')
     
 def restart_device():
+    button_disable()
     if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
+        State.set("State: Busy")
         try:
             if 1 == device_family.get():
                 jlink_obj = API.API(API.DeviceFamily.NRF51)
@@ -181,9 +219,15 @@ def restart_device():
             messagebox.showerror('Device Restart', str(exc))
     else:
         messagebox.showerror('Device Restart', 'Must choice one J-Link.')
+    button_enable()
+
+def restart_device_cmd():
+    threading.Thread(target = restart_device, args = []).start()
 
 def get_device_mac():
+    button_disable()
     if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
+        State.set("State: Busy")
         try:
             if 1 == device_family.get():
                 jlink_obj = API.API(API.DeviceFamily.NRF51)
@@ -202,12 +246,18 @@ def get_device_mac():
             State.set("State: Read Device MAC Address Failed.")
             messagebox.showerror('Read Device MAC Address', str(exc))
         else:
-            State.set("State: Read Device MAC Address Successed is %s." %(addr_string))
+            State.set("State: Read Device MAC Address Successed is %s." %(addr_string.upper()))
     else:
         messagebox.showerror('Read Device MAC Address', 'Must choice one J-Link.')
+    button_enable()
+
+def get_device_mac_cmd():
+    threading.Thread(target = get_device_mac, args = []).start()
 
 def device_recover():
+    button_disable()
     if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
+        State.set("State: Busy")
         try:
             if 1 == device_family.get():
                 jlink_obj = API.API(API.DeviceFamily.NRF51)
@@ -226,9 +276,15 @@ def device_recover():
             State.set("State: Device Recover Successed.")
     else:
         messagebox.showerror('Device Recover', 'Must choice one J-Link.')
+    button_enable()
+
+def device_recover_cmd():
+    threading.Thread(target = device_recover, args = []).start()
 
 def device_erase_all():
+    button_disable()
     if JLinkDevice.get() != "No J-Link Device" and JLinkDevice.get() != "Choice ID":
+        State.set("State: Busy")
         try:
             jlink_obj = None
             if 1 == device_family.get():
@@ -248,6 +304,10 @@ def device_erase_all():
             State.set("State: Device Erase All Successed.")
     else:
         messagebox.showerror('Device Erase All', 'Must choice one J-Link.')
+    button_enable()
+
+def device_erase_all_cmd():
+    threading.Thread(target = device_erase_all, args = []).start()
 
 #------------------------------------------------------------------------- 
 root = Tk() # create a top-level window
@@ -340,14 +400,20 @@ Label(multi_download_frame, text='SEGGER to use:').grid(row=0, column=0, padx=5,
 JLinkDevice_OP = OptionMenu(multi_download_frame, JLinkDevice, *JLinkDeviceList)
 JLinkDevice_OP.config(width=13)
 JLinkDevice_OP.grid(row=0, column=1, padx=5, pady=5)
-Button(multi_download_frame, text='Refresh', command=refresh_jlink_list).grid(row=0, column=2, padx=5, pady=5, stick=E+W+N+S)
-Button(multi_download_frame, text='Restart', command=restart_device).grid(row=0, column=3, padx=5, pady=5, stick=E+W+N+S)
-Button(multi_download_frame, text='Recover', command=device_recover).grid(row=0, column=4, padx=5, pady=5, stick=E+W+N+S)
+refresh_jlink_list_cmd_button = Button(multi_download_frame, text='Refresh', command=refresh_jlink_list_cmd)
+refresh_jlink_list_cmd_button.grid(row=0, column=2, padx=5, pady=5, stick=E+W+N+S)
+restart_device_cmd_button = Button(multi_download_frame, text='Restart', command=restart_device_cmd)
+restart_device_cmd_button.grid(row=0, column=3, padx=5, pady=5, stick=E+W+N+S)
+device_recover_cmd_button = Button(multi_download_frame, text='Recover', command=device_recover_cmd)
+device_recover_cmd_button.grid(row=0, column=4, padx=5, pady=5, stick=E+W+N+S)
 
 Label(multi_download_frame, text='Programe choice file:').grid(row=1, column=0, padx=5, columnspan=2, pady=5, stick=W)
-Button(multi_download_frame, text='Programe', command=programe_file).grid(row=1, column=2, padx=5, pady=5)
-Button(multi_download_frame, text='Get MAC', command=get_device_mac).grid(row=1, column=3, padx=5, pady=5, stick=E+W+N+S)
-Button(multi_download_frame, text='Erase All', command=device_erase_all).grid(row=1, column=4, padx=5, pady=5, stick=E+W+N+S)
+programe_file_cmd_button= Button(multi_download_frame, text='Programe', command=programe_file_cmd)
+programe_file_cmd_button.grid(row=1, column=2, padx=5, pady=5)
+get_device_mac_cmd_button = Button(multi_download_frame, text='Get MAC', command=get_device_mac_cmd)
+get_device_mac_cmd_button.grid(row=1, column=3, padx=5, pady=5, stick=E+W+N+S)
+device_erase_all_cmd_button = Button(multi_download_frame, text='Erase All', command=device_erase_all_cmd)
+device_erase_all_cmd_button.grid(row=1, column=4, padx=5, pady=5, stick=E+W+N+S)
 
 if platform.release() == 'XP':
     download_progress = Progressbar(multi_download_frame, orient="horizontal", length=460, mode="determinate")
