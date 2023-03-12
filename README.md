@@ -1,3 +1,6 @@
+### file_rename.py	2023/3/12
+- 文件重命名脚本
+
 ### nRF5x Programe Tools.py	2018/5/21
 - nRF5x Programe Tools, write SoftDevice and App and Bootloader file, restart, protection, get MAC address.
 
